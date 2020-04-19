@@ -12,6 +12,48 @@ export class Candidate {
 
 export interface Ballot {
   getWinners(validCandidates: Candidate[]): Candidate[];
+  getWeight(): number;
+}
+
+export class OpaVoteBallot implements Ballot {
+  weight: number;
+  preferences: number[][];
+
+  constructor(line: string) {
+    const fields = line.split(" ");
+    this.weight = parseInt(fields.splice(0, 1)[0], 10);
+    const terminator = fields.splice(-1, 1)[0];
+    if (terminator != "0") {
+      throw `Invalid Ballot: ${line}`;
+    }
+    this.preferences = fields.map(field =>
+      field.split("=").map(str => parseInt(str, 10))
+    );
+  }
+
+  getWinners(validCandidates: Candidate[]): Candidate[] {
+    const winners = [];
+    const candidatesMap = new Map();
+    for (const candidate of validCandidates) {
+      candidatesMap.set(candidate.index, candidate);
+    }
+    for (const preference of this.preferences) {
+      for (const index of preference) {
+        const candidate = candidatesMap.get(index);
+        if (candidate) {
+          winners.push(candidate);
+        }
+      }
+      if (winners) {
+        return winners;
+      }
+    }
+    return [];
+  }
+
+  getWeight(): number {
+    return this.weight;
+  }
 }
 
 export class CivsBallot implements Ballot {
@@ -35,6 +77,10 @@ export class CivsBallot implements Ballot {
     }
     return winners;
   }
+
+  getWeight(): number {
+    return 1;
+  }
 }
 
 export class Round {
@@ -52,11 +98,12 @@ export class Round {
     for (const ballot of ballots) {
       const winners = ballot.getWinners(validCandidates);
       if (winners) {
+        const value = ballot.getWeight() / winners.length;
         for (const winner of winners) {
           const oldScore = this.scores.get(winner);
-          this.scores.set(winner, oldScore + 1 / winners.length);
+          this.scores.set(winner, oldScore + value);
         }
-        validBallots++;
+        validBallots += ballot.getWeight();
       }
     }
     let worstCandidates = [];
@@ -67,8 +114,8 @@ export class Round {
         this.winner = candidate;
       }
       if (
-        worstScore == null ||
-        (score < worstScore && candidate.name != "NOTA")
+        (worstScore == null || score < worstScore) &&
+        candidate.name != "NOTA"
       ) {
         if (worstCandidates) {
           this.remainingCandidates = this.remainingCandidates.concat(
@@ -96,7 +143,7 @@ export class Election {
   winner: Candidate = null;
   title: string;
   constructor(filename: string, contents: string) {
-    if (filename.endsWith('.csv')) {
+    if (filename.endsWith(".csv")) {
       filename = filename.slice(0, -4);
     }
     this.title = filename;
