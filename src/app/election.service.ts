@@ -39,7 +39,7 @@ export class OpaVoteBallot implements Ballot {
     }
     for (const preference of this.preferences) {
       for (const index of preference) {
-        const candidate = candidatesMap.get(index);
+        const candidate = candidatesMap.get(index - 1);
         if (candidate) {
           winners.push(candidate);
         }
