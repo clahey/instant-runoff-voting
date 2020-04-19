@@ -10,7 +10,11 @@ export class Candidate {
   }
 }
 
-export class Ballot {
+export interface Ballot {
+  getWinners(validCandidates: Candidate[]): Candidate[];
+}
+
+export class CivsBallot implements Ballot {
   ranks;
   constructor(line: string) {
     this.ranks = line.split(",").map(str => parseInt(str, 10));
@@ -91,16 +95,16 @@ export class Election {
   rounds: Round[] = [];
   winner: Candidate = null;
   title: string;
-  constructor(title: string, csv: string) {
-    if (title.endsWith('.csv')) {
-      title = title.slice(0, -4);
+  constructor(filename: string, contents: string) {
+    if (filename.endsWith('.csv')) {
+      filename = filename.slice(0, -4);
     }
-    this.title = title;
-    const lines = csv.trim().split("\n");
+    this.title = filename;
+    const lines = contents.trim().split("\n");
     this.candidates = lines[0]
       .split(",")
       .map((name, index) => new Candidate(name, index));
-    this.ballots = lines.splice(1).map(line => new Ballot(line));
+    this.ballots = lines.splice(1).map(line => new CivsBallot(line));
   }
 
   runElection() {
@@ -124,8 +128,8 @@ export class ElectionService {
 
   constructor() {}
 
-  addElection(title: string, csv: string) {
-    const election = new Election(title, csv);
+  addElection(filename: string, contents: string) {
+    const election = new Election(filename, contents);
     election.runElection();
     this.elections.push(election);
     this.electionsSubject.next(this.elections);
