@@ -1,0 +1,13 @@
+<h1 mat-dialog-title>Add Election</h1>
+<div mat-dialog-content>
+	<input multiple type=file (change)=onFileChange($event) cdkFocusInitial>
+</div>
+	<div mat-dialog-actions>
+		<button mat-button (click)="onCancel()"><span>Cancel</span></button>
+		<button #ok mat-button (click)="addElections()" [disabled] = "selectedFiles && selectedFiles.length > 0 ? null:'disabled'">
+    <span [ngSwitch]="selectedFiles && selectedFiles.length > 1">
+      <span *ngSwitchCase="true">Add Elections</span>
+      <span *ngSwitchDefault>Add Election</span>
+    </span>
+    </button>
+	</div>

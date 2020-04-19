@@ -1,0 +1,21 @@
+<mat-card class="round">
+  <mat-card-title>Round {{index + 1}}</mat-card-title>
+  Scores:
+<ul>
+  <li *ngFor="let candidate of round.validCandidates">
+    {{candidate.name}} - {{round.scores.get(candidate)}}
+  </li>
+</ul>
+<div *ngIf="round.winner">Winner: {{round.winner.name}}</div>
+<div *ngIf="!round.winner">
+<div *ngIf="round.eliminated">Eliminated: <s>{{round.eliminated.name}}</s></div>
+
+Remaining Candidates:
+<ul>
+  <li *ngFor="let candidate of round.remainingCandidates">
+    {{candidate.name}}
+  </li>
+</ul>
+
+</div>
+</mat-card>
