@@ -22,7 +22,7 @@ export class UploaderComponent implements OnInit {
 
   onFileChange(e) {
     this.selectedFiles = e.target.files;
-    this.renderer.selectRootElement('#ok').focus();
+    //this.renderer.selectRootElement('#ok-button').focus();
   }
 
   onCancel() {

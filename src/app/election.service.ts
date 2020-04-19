@@ -44,7 +44,7 @@ export class OpaVoteBallot implements Ballot {
           winners.push(candidate);
         }
       }
-      if (winners) {
+      if (winners.length > 0) {
         return winners;
       }
     }
@@ -97,7 +97,7 @@ export class Round {
     }
     for (const ballot of ballots) {
       const winners = ballot.getWinners(validCandidates);
-      if (winners) {
+      if (winners.length>0) {
         const value = ballot.getWeight() / winners.length;
         for (const winner of winners) {
           const oldScore = this.scores.get(winner);
@@ -148,10 +148,42 @@ export class Election {
     }
     this.title = filename;
     const lines = contents.trim().split("\n");
+    if (lines.indexOf("0") == -1) {
+      this.parseCivs(lines);
+    } else {
+      this.parseOpaVote(lines);
+    }
+  }
+
+  parseCivs(lines: string[]) {
     this.candidates = lines[0]
       .split(",")
       .map((name, index) => new Candidate(name, index));
     this.ballots = lines.splice(1).map(line => new CivsBallot(line));
+  }
+
+  parseOpaVote(lines: string[]) {
+    lines = lines.slice();
+    const firstLine = lines.splice(0, 1)[0];
+    const firstLineArray = firstLine.split(" ");
+    if (firstLineArray.length != 2) {
+      throw `Invalid first line: ${firstLine}`;
+    }
+    const candidateCount = parseInt(firstLineArray[0], 10);
+    if (firstLineArray[1] != "1") {
+      throw "Doesn't support multiple winners";
+    }
+
+    const separator = lines.indexOf("0");
+    this.ballots = lines
+      .splice(0, separator)
+      .map(line => new OpaVoteBallot(line));
+    lines.shift();
+    this.title = lines.pop();
+    if (lines.length != candidateCount) {
+      throw `Expected ${candidateCount} candidates, found ${lines.length}`;
+    }
+    this.candidates = lines.map((name, index) => new Candidate(name, index));
   }
 
   runElection() {
